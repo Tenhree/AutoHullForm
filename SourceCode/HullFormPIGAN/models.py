@@ -183,7 +183,9 @@ class TwoStageCVAE(nn.Module):
         # X 通道：沿最后一维(宽度=50)做递增累计，再归一化到 [0,1]
         dx = F.softplus(x_raw) + 1e-6
         x_cum = torch.cumsum(dx, dim=-1)
-        x_out = x_cum / x_cum[..., -1:].clamp(min=1e-6)
+        # 每个样本的整个 H×W 共用一个最大值
+        x_max = x_cum.amax(dim=(-2, -1), keepdim=True)
+        x_out = x_cum / x_max.clamp(min=1e-6)
 
         # Y 通道：sigmoid 到 [0,1]
         y_out = torch.sigmoid(y_raw)
